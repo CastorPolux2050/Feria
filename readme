@@ -1,0 +1,141 @@
+# 🛍️ Feria ARIAS - Sistema de Ventas
+
+Sistema de punto de venta web responsive conectado con Google Sheets para gestión de inventario en tiempo real.
+
+## 🚀 Características
+
+- ✅ **Inventario en tiempo real** - Conectado directamente con Google Sheets
+- ✅ **Responsive design** - Optimizado para móviles y tablets
+- ✅ **Actualización instantánea** - Las ventas se registran al momento
+- ✅ **Interfaz intuitiva** - Fácil de usar para cualquier vendedor
+- ✅ **Control de stock** - Productos vendidos no aparecen como disponibles
+- ✅ **Múltiples métodos de pago** - Efectivo y Alias
+
+## 📱 Demo
+
+🔗 **[Ver Demo en Vivo](https://tu-usuario.github.io/feria-arias)**
+
+## 🛠️ Instalación
+
+### Paso 1: Clonar repositorio
+
+```bash
+git clone https://github.com/tu-usuario/feria-arias.git
+cd feria-arias
+```
+
+### Paso 2: Configurar Google Apps Script
+
+1. Ve a [script.google.com](https://script.google.com)
+2. Crea un nuevo proyecto llamado "Feria ARIAS"
+3. Copia y pega el código de `google-apps-script.js`
+4. Implementa como Web App:
+   - **Ejecutar como:** Tu cuenta
+   - **Acceso:** Cualquier usuario
+5. Copia la URL generada
+
+### Paso 3: Configurar la aplicación
+
+1. Edita `index.html`
+2. Reemplaza `GOOGLE_APPS_SCRIPT_URL` con tu URL:
+```javascript
+const GOOGLE_APPS_SCRIPT_URL = 'TU_URL_AQUI';
+```
+
+### Paso 4: Subir a GitHub Pages
+
+1. Sube los archivos a tu repositorio
+2. Ve a Settings → Pages
+3. Selecciona "Deploy from branch: main"
+4. ¡Listo! Tu aplicación estará en `https://tu-usuario.github.io/feria-arias`
+
+## 📊 Estructura de Google Sheets
+
+Tu Google Sheets debe tener estas columnas:
+
+| A | B | C | D | E | F | G | H |
+|---|---|---|---|---|---|---|---|
+| Tipo | Nombre | Descripción | Precio | Rubro | Código | FECHA HORA VENTA | MEDIO |
+
+- **Columna F (Código):** CV1, SV1, LV8, etc.
+- **Columna G:** Se llena automáticamente con fecha/hora de venta
+- **Columna H:** Se llena automáticamente con método de pago
+
+## 🔧 Configuración del Google Sheets
+
+1. **Hacer público para lectura:**
+   - Compartir → "Cualquier persona con el enlace" → "Visualizador"
+
+2. **ID del Spreadsheet:**
+   - Extraer de la URL: `docs.google.com/spreadsheets/d/[ID_AQUI]/edit`
+
+## 💻 Uso
+
+1. **Cargar productos:** La app carga automáticamente desde Google Sheets
+2. **Agregar al carrito:** Ingresa código y presiona Enter o "Agregar"
+3. **Procesar venta:** Selecciona método de pago y confirma
+4. **Actualización automática:** El producto se marca como vendido al instante
+
+## 📱 Funcionalidades
+
+### Interfaz Principal
+- Campo de código con autocompletado en mayúsculas
+- Contador de productos disponibles
+- Carrito con precios y totales automáticos
+- Botón de recarga para actualizar inventario
+
+### Proceso de Venta
+1. Escanear/escribir código del producto
+2. Verificar automáticamente disponibilidad
+3. Seleccionar método de pago (Alias/Efectivo)
+4. Confirmar venta con modal de verificación
+5. Actualización instantánea en Google Sheets
+
+### Estados de la aplicación
+- **Cargando:** Muestra spinner mientras conecta con Sheets
+- **Procesando:** Bloquea interfaz durante actualización
+- **Mensajes:** Feedback visual para todas las acciones
+
+## 🔒 Seguridad
+
+- Sin credenciales hardcodeadas
+- Comunicación HTTPS con Google Apps Script
+- Validación de datos en frontend y backend
+- Control de acceso via Google Apps Script
+
+## 🐛 Troubleshooting
+
+### La app no carga productos
+1. Verificar que Google Sheets sea público
+2. Verificar URL del Google Apps Script
+3. Revisar console del navegador (F12)
+
+### Las ventas no se actualizan
+1. Verificar permisos del Google Apps Script
+2. Ejecutar función `testScript` en Apps Script
+3. Revisar logs de ejecución
+
+### Error de CORS
+- Asegurar que el Google Apps Script esté implementado como Web App
+- Verificar configuración "Acceso: Cualquier usuario"
+
+## 📞 Soporte
+
+- **Creado para:** Feria ARIAS
+- **Tecnologías:** React, Google Apps Script, Tailwind CSS
+- **Compatible con:** Chrome, Firefox, Safari, Edge
+- **Mobile:** iOS Safari, Android Chrome
+
+## 📄 Licencia
+
+Proyecto privado para uso exclusivo de Feria ARIAS.
+
+---
+
+### 🎯 Próximas características
+
+- [ ] Reportes de ventas por período
+- [ ] Categorías de productos
+- [ ] Descuentos y promociones
+- [ ] Histórico de ventas por vendedor
+- [ ] Backup automático de datos
