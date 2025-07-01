@@ -1,1 +1,447 @@
-hola
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Feria ARIAS - Sistema de Ventas</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    
+    <style>
+        .animate-spin {
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        .animate-bounce {
+            animation: bounce 1s infinite;
+        }
+        @keyframes bounce {
+            0%, 100% { transform: translateY(-25%); }
+            50% { transform: none; }
+        }
+        .animate-pulse {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: .5; }
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+        const { Plus, ShoppingCart, CreditCard, DollarSign, Check, X, Trash2, RefreshCw } = lucide;
+
+        const SistemaVentas = () => {
+            const [productos, setProductos] = useState([]);
+            const [codigoInput, setCodigoInput] = useState('');
+            const [carrito, setCarrito] = useState([]);
+            const [total, setTotal] = useState(0);
+            const [showConfirmModal, setShowConfirmModal] = useState(false);
+            const [metodoPago, setMetodoPago] = useState('');
+            const [loading, setLoading] = useState(true);
+            const [mensaje, setMensaje] = useState('');
+            const [procesando, setProcesando] = useState(false);
+            
+            // URL de tu Google Apps Script
+            const GOOGLE_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzioEqAGZppD1p77H1npW8ZEB4nseRBIFGEY1L1nLV6V6eGCwlJFBfLwFWRjQomM6jF/exec';
+
+            useEffect(() => {
+                cargarProductos();
+            }, []);
+
+            useEffect(() => {
+                const nuevoTotal = carrito.reduce((sum, item) => sum + item.precio, 0);
+                setTotal(nuevoTotal);
+            }, [carrito]);
+
+            const cargarProductos = async () => {
+                try {
+                    setLoading(true);
+                    setMensaje('Conectando con Google Sheets...');
+                    
+                    console.log('📡 Cargando productos...');
+                    
+                    const response = await fetch(GOOGLE_APPS_SCRIPT_URL, {
+                        method: 'GET',
+                        headers: {
+                            'Cache-Control': 'no-cache'
+                        }
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error(`Error HTTP ${response.status}`);
+                    }
+                    
+                    const result = await response.json();
+                    console.log('📊 Resultado:', result);
+                    
+                    if (result.success) {
+                        setProductos(result.productos);
+                        setLoading(false);
+                        setMensaje(`✅ ${result.productos.length} productos cargados`);
+                        setTimeout(() => setMensaje(''), 3000);
+                    } else {
+                        throw new Error(result.message || 'Error del servidor');
+                    }
+                    
+                } catch (error) {
+                    console.error('❌ Error cargando productos:', error);
+                    setLoading(false);
+                    
+                    // Cargar productos de ejemplo para probar
+                    const productosEjemplo = [
+                        { codigo: 'CV1', nombre: 'Pollera Forever 21', descripcion: 'jean mini con botones', precio: 3500, tipo: 'Pollera' },
+                        { codigo: 'CV2', nombre: 'Vestido Pull and bear', descripcion: 'Rojo negro y blanco rayado', precio: 4800, tipo: 'Vestido' },
+                        { codigo: 'LV8', nombre: 'Campera sin marca', descripcion: 'negra dryfit', precio: 10000, tipo: 'Campera' },
+                        { codigo: 'SV1', nombre: 'Jean Jazmin Chebar', descripcion: 'Azul oscuro', precio: 3800, tipo: 'Jean' }
+                    ];
+                    
+                    setProductos(productosEjemplo);
+                    setMensaje(`⚠️ Modo offline: ${productosEjemplo.length} productos de ejemplo`);
+                    setTimeout(() => setMensaje(''), 5000);
+                }
+            };
+
+            const buscarProducto = (codigo) => {
+                return productos.find(p => p.codigo === codigo.toUpperCase().trim());
+            };
+
+            const agregarProducto = () => {
+                const codigoLimpio = codigoInput.trim().toUpperCase();
+                
+                if (!codigoLimpio) {
+                    setMensaje('⚠️ Ingresa un código');
+                    setTimeout(() => setMensaje(''), 3000);
+                    return;
+                }
+
+                const yaEnCarrito = carrito.find(item => item.codigo === codigoLimpio);
+                if (yaEnCarrito) {
+                    setMensaje('⚠️ Producto ya está en el carrito');
+                    setTimeout(() => setMensaje(''), 3000);
+                    return;
+                }
+
+                const producto = buscarProducto(codigoLimpio);
+                
+                if (producto) {
+                    setCarrito([...carrito, { ...producto, id: Date.now() }]);
+                    setCodigoInput('');
+                    setMensaje(`✅ ${producto.nombre} agregado`);
+                    setTimeout(() => setMensaje(''), 2000);
+                } else {
+                    setMensaje(`❌ Código "${codigoLimpio}" no encontrado`);
+                    setTimeout(() => setMensaje(''), 3000);
+                }
+            };
+
+            const eliminarDelCarrito = (id) => {
+                setCarrito(carrito.filter(item => item.id !== id));
+            };
+
+            const seleccionarMetodoPago = (metodo) => {
+                if (carrito.length === 0) {
+                    setMensaje('⚠️ El carrito está vacío');
+                    setTimeout(() => setMensaje(''), 3000);
+                    return;
+                }
+                setMetodoPago(metodo);
+                setShowConfirmModal(true);
+            };
+
+            const confirmarVenta = async () => {
+                if (procesando) return;
+                
+                try {
+                    setProcesando(true);
+                    setMensaje('💳 Procesando venta...');
+                    
+                    const ahora = new Date();
+                    const fechaHora = ahora.toLocaleDateString('es-AR') + ' ' + 
+                                    ahora.toLocaleTimeString('es-AR', {hour: '2-digit', minute: '2-digit'});
+
+                    const datosVenta = {
+                        productos: carrito.map(item => ({
+                            codigo: item.codigo,
+                            fechaHora: fechaHora,
+                            medio: metodoPago
+                        })),
+                        total: total
+                    };
+
+                    console.log('📤 Enviando venta:', datosVenta);
+
+                    const response = await fetch(GOOGLE_APPS_SCRIPT_URL, {
+                        method: 'POST',
+                        headers: { 
+                            'Content-Type': 'application/json',
+                            'Cache-Control': 'no-cache'
+                        },
+                        body: JSON.stringify(datosVenta)
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error(`Error HTTP ${response.status}`);
+                    }
+                    
+                    const result = await response.json();
+                    console.log('📨 Respuesta:', result);
+                    
+                    if (result.success) {
+                        setMensaje(`🎉 Venta confirmada! $${total.toLocaleString()} (${metodoPago})`);
+                        setCarrito([]);
+                        setTotal(0);
+                        setShowConfirmModal(false);
+                        setMetodoPago('');
+                        
+                        setTimeout(() => cargarProductos(), 2000);
+                    } else {
+                        throw new Error(result.message || 'Error procesando venta');
+                    }
+                    
+                } catch (error) {
+                    console.error('❌ Error confirmando venta:', error);
+                    setMensaje(`❌ Error: ${error.message}`);
+                } finally {
+                    setProcesando(false);
+                }
+            };
+
+            const cancelarVenta = () => {
+                setShowConfirmModal(false);
+                setMetodoPago('');
+            };
+
+            const handleKeyPress = (e) => {
+                if (e.key === 'Enter') {
+                    agregarProducto();
+                }
+            };
+
+            if (loading) {
+                return (
+                    <div className="min-h-screen bg-gradient-to-br from-purple-600 to-blue-600 flex items-center justify-center">
+                        <div className="bg-white rounded-xl p-8 text-center shadow-2xl">
+                            <div className="text-5xl mb-4 animate-bounce">🛍️</div>
+                            <h1 className="text-2xl font-bold text-gray-800 mb-2">Feria ARIAS</h1>
+                            <p className="text-gray-600">Cargando productos...</p>
+                            <div className="w-full bg-gray-200 rounded-full h-2 mt-4">
+                                <div className="bg-purple-600 h-2 rounded-full animate-pulse" style={{width: '70%'}}></div>
+                            </div>
+                        </div>
+                    </div>
+                );
+            }
+
+            return (
+                <div className="min-h-screen bg-gradient-to-br from-purple-600 to-blue-600 p-3 sm:p-4">
+                    <div className="max-w-7xl mx-auto">
+                        {/* Header */}
+                        <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6 mb-4">
+                            <div className="flex justify-between items-center mb-3">
+                                <div>
+                                    <h1 className="text-xl sm:text-3xl font-bold text-gray-800">
+                                        🛍️ Feria ARIAS
+                                    </h1>
+                                    <p className="text-sm sm:text-base text-gray-600">Sistema de Ventas</p>
+                                </div>
+                                <button
+                                    onClick={cargarProductos}
+                                    disabled={loading}
+                                    className="bg-purple-100 hover:bg-purple-200 text-purple-700 p-2 rounded-lg transition-colors"
+                                >
+                                    <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+                                </button>
+                            </div>
+                            
+                            {mensaje && (
+                                <div className={`px-4 py-3 rounded-lg text-center text-sm sm:text-base ${
+                                    mensaje.includes('❌') ? 'bg-red-50 border border-red-200 text-red-800' :
+                                    mensaje.includes('⚠️') ? 'bg-yellow-50 border border-yellow-200 text-yellow-800' :
+                                    mensaje.includes('✅') || mensaje.includes('🎉') ? 'bg-green-50 border border-green-200 text-green-800' :
+                                    'bg-blue-50 border border-blue-200 text-blue-800'
+                                }`}>
+                                    {mensaje}
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+                            {/* Panel de entrada */}
+                            <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6">
+                                <h2 className="text-lg sm:text-xl font-semibold mb-4 flex items-center gap-2">
+                                    <ShoppingCart className="w-5 h-5" />
+                                    Agregar Productos
+                                    {productos.length > 0 && (
+                                        <span className="text-sm bg-purple-100 text-purple-700 px-2 py-1 rounded-full">
+                                            {productos.length} disponibles
+                                        </span>
+                                    )}
+                                </h2>
+                                
+                                <div className="space-y-3 mb-4">
+                                    <input
+                                        type="text"
+                                        value={codigoInput}
+                                        onChange={(e) => setCodigoInput(e.target.value.toUpperCase())}
+                                        onKeyPress={handleKeyPress}
+                                        placeholder="Código (ej: CV1, SV1, LV8...)"
+                                        className="w-full px-4 py-3 text-lg border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 font-mono"
+                                        disabled={procesando}
+                                    />
+                                    <button
+                                        onClick={agregarProducto}
+                                        disabled={procesando || !codigoInput.trim()}
+                                        className="w-full bg-purple-600 hover:bg-purple-700 disabled:bg-gray-400 text-white py-3 px-4 rounded-lg transition-colors flex items-center justify-center gap-2 text-lg font-medium shadow-lg"
+                                    >
+                                        <Plus className="w-5 h-5" />
+                                        Agregar Producto
+                                    </button>
+                                </div>
+
+                                {/* Carrito */}
+                                <div className="space-y-3 max-h-64 overflow-y-auto">
+                                    {carrito.length === 0 ? (
+                                        <div className="text-gray-500 text-center py-8">
+                                            🛒 Carrito vacío
+                                        </div>
+                                    ) : (
+                                        carrito.map((item) => (
+                                            <div key={item.id} className="bg-gray-50 p-3 rounded-lg border">
+                                                <div className="flex justify-between items-start">
+                                                    <div className="flex-1 min-w-0">
+                                                        <div className="font-semibold text-gray-800">
+                                                            {item.codigo} - {item.tipo}
+                                                        </div>
+                                                        <div className="text-sm text-gray-600 truncate">
+                                                            {item.nombre}
+                                                        </div>
+                                                        <div className="text-lg font-bold text-green-600 mt-1">
+                                                            ${item.precio.toLocaleString()}
+                                                        </div>
+                                                    </div>
+                                                    <button
+                                                        onClick={() => eliminarDelCarrito(item.id)}
+                                                        disabled={procesando}
+                                                        className="text-red-500 hover:text-red-700 p-1 rounded hover:bg-red-50 transition-colors"
+                                                    >
+                                                        <Trash2 className="w-4 h-4" />
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        ))
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Panel de pago */}
+                            <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6">
+                                <h2 className="text-lg sm:text-xl font-semibold mb-4">Resumen de Venta</h2>
+                                
+                                <div className="bg-gradient-to-br from-green-50 to-blue-50 border-2 border-green-200 p-6 rounded-xl mb-6 text-center">
+                                    <div className="text-3xl sm:text-4xl font-bold text-gray-800">
+                                        ${total.toLocaleString()}
+                                    </div>
+                                    <div className="text-gray-600 mt-1">
+                                        {carrito.length} producto{carrito.length !== 1 ? 's' : ''}
+                                    </div>
+                                </div>
+
+                                <div className="space-y-3">
+                                    <button
+                                        onClick={() => seleccionarMetodoPago('Alias')}
+                                        disabled={carrito.length === 0 || procesando}
+                                        className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white py-4 px-4 rounded-xl transition-colors flex items-center justify-center gap-3 text-lg font-medium shadow-lg"
+                                    >
+                                        <CreditCard className="w-6 h-6" />
+                                        Pagar con Alias
+                                    </button>
+                                    
+                                    <button
+                                        onClick={() => seleccionarMetodoPago('Efectivo')}
+                                        disabled={carrito.length === 0 || procesando}
+                                        className="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white py-4 px-4 rounded-xl transition-colors flex items-center justify-center gap-3 text-lg font-medium shadow-lg"
+                                    >
+                                        <DollarSign className="w-6 h-6" />
+                                        Pagar en Efectivo
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Modal de confirmación */}
+                        {showConfirmModal && (
+                            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+                                <div className="bg-white rounded-xl p-6 max-w-sm w-full mx-4">
+                                    <div className="text-center mb-6">
+                                        <div className="text-5xl mb-4">
+                                            {procesando ? '⏳' : '🤔'}
+                                        </div>
+                                        <h3 className="text-xl font-semibold mb-2">
+                                            {procesando ? 'Procesando...' : '¿Confirmar venta?'}
+                                        </h3>
+                                    </div>
+                                    
+                                    <div className="bg-gradient-to-br from-green-50 to-blue-50 border-2 border-green-200 p-4 rounded-xl mb-6 text-center">
+                                        <div className="text-2xl font-bold text-gray-800">
+                                            ${total.toLocaleString()}
+                                        </div>
+                                        <div className="text-gray-600 mt-1">
+                                            {carrito.length} producto{carrito.length !== 1 ? 's' : ''}
+                                        </div>
+                                        <div className="text-sm font-medium mt-2 px-3 py-1 bg-blue-100 text-blue-700 rounded-full inline-block">
+                                            💳 {metodoPago}
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-3">
+                                        <button
+                                            onClick={cancelarVenta}
+                                            disabled={procesando}
+                                            className="w-full bg-gray-500 hover:bg-gray-600 text-white py-3 px-4 rounded-xl transition-colors flex items-center justify-center gap-2 font-medium"
+                                        >
+                                            <X className="w-5 h-5" />
+                                            {procesando ? 'Procesando...' : 'Cancelar'}
+                                        </button>
+                                        <button
+                                            onClick={confirmarVenta}
+                                            disabled={procesando}
+                                            className="w-full bg-green-600 hover:bg-green-700 text-white py-3 px-4 rounded-xl transition-colors flex items-center justify-center gap-2 font-medium shadow-lg"
+                                        >
+                                            {procesando ? (
+                                                <>
+                                                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                                    Procesando...
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <Check className="w-5 h-5" />
+                                                    Confirmar Venta
+                                                </>
+                                            )}
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            );
+        };
+
+        // Renderizar la aplicación
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<SistemaVentas />);
+    </script>
+</body>
+</html>
