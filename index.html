@@ -88,7 +88,7 @@
                     if (result.success) {
                         setProductos(result.productos);
                         setLoading(false);
-                        setMensaje(`✅ ${result.productos.length} productos cargados`);
+                        setMensaje(`✅ ${result.productos.length} productos cargados desde Google Sheets`);
                         setTimeout(() => setMensaje(''), 3000);
                     } else {
                         throw new Error(result.message || 'Error del servidor');
@@ -97,18 +97,9 @@
                 } catch (error) {
                     console.error('❌ Error cargando productos:', error);
                     setLoading(false);
-                    
-                    // Cargar productos de ejemplo para probar
-                    const productosEjemplo = [
-                        { codigo: 'CV1', nombre: 'Pollera Forever 21', descripcion: 'jean mini con botones', precio: 3500, tipo: 'Pollera' },
-                        { codigo: 'CV2', nombre: 'Vestido Pull and bear', descripcion: 'Rojo negro y blanco rayado', precio: 4800, tipo: 'Vestido' },
-                        { codigo: 'LV8', nombre: 'Campera sin marca', descripcion: 'negra dryfit', precio: 10000, tipo: 'Campera' },
-                        { codigo: 'SV1', nombre: 'Jean Jazmin Chebar', descripcion: 'Azul oscuro', precio: 3800, tipo: 'Jean' }
-                    ];
-                    
-                    setProductos(productosEjemplo);
-                    setMensaje(`⚠️ Modo offline: ${productosEjemplo.length} productos de ejemplo`);
-                    setTimeout(() => setMensaje(''), 5000);
+                    setProductos([]);
+                    setMensaje(`❌ Error conectando con Google Sheets: ${error.message}`);
+                    setTimeout(() => setMensaje(''), 8000);
                 }
             };
 
