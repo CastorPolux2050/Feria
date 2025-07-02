@@ -1,5 +1,5 @@
 // ⚠️ ¡IMPORTANTE! Pega aquí la URL de tu aplicación web de Google Apps Script.
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwk3Xms5bm9B6If8tMfJz1k9jamMoH72dUAZoTKMRjRuGWtfj9FdnN2_kXoeL7uqZqT/exec';
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxW-rYHx77BrMRRrrqGASm5xS2q8aGBaQOA2jmbRFM/dev';
 
 // Espera a que todo el contenido del HTML se cargue antes de ejecutar el script.
 document.addEventListener('DOMContentLoaded', () => {
