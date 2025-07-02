@@ -69,7 +69,8 @@
                     setLoading(true);
                     setMensaje('Conectando con Google Sheets...');
                     
-                    console.log('📡 Cargando productos...');
+                    console.log('📡 Iniciando carga de productos...');
+                    console.log('🔗 URL:', GOOGLE_APPS_SCRIPT_URL);
                     
                     const response = await fetch(GOOGLE_APPS_SCRIPT_URL, {
                         method: 'GET',
@@ -78,28 +79,44 @@
                         }
                     });
                     
+                    console.log('📡 Response status:', response.status);
+                    console.log('📡 Response ok:', response.ok);
+                    
                     if (!response.ok) {
-                        throw new Error(`Error HTTP ${response.status}`);
+                        throw new Error(`Error HTTP ${response.status}: ${response.statusText}`);
                     }
                     
-                    const result = await response.json();
-                    console.log('📊 Resultado:', result);
+                    const responseText = await response.text();
+                    console.log('📄 Response text:', responseText);
+                    
+                    let result;
+                    try {
+                        result = JSON.parse(responseText);
+                        console.log('📊 Parsed result:', result);
+                    } catch (parseError) {
+                        console.error('❌ JSON Parse Error:', parseError);
+                        throw new Error('Respuesta no es JSON válido: ' + responseText.substring(0, 100));
+                    }
                     
                     if (result.success) {
-                        setProductos(result.productos);
+                        console.log('✅ Productos recibidos:', result.productos?.length || 0);
+                        setProductos(result.productos || []);
                         setLoading(false);
-                        setMensaje(`✅ ${result.productos.length} productos cargados desde Google Sheets`);
+                        setMensaje(`✅ ${(result.productos || []).length} productos cargados desde Google Sheets`);
                         setTimeout(() => setMensaje(''), 3000);
                     } else {
                         throw new Error(result.message || 'Error del servidor');
                     }
                     
                 } catch (error) {
-                    console.error('❌ Error cargando productos:', error);
+                    console.error('❌ Error completo:', error);
+                    console.error('❌ Error stack:', error.stack);
                     setLoading(false);
                     setProductos([]);
-                    setMensaje(`❌ Error conectando con Google Sheets: ${error.message}`);
-                    setTimeout(() => setMensaje(''), 8000);
+                    setMensaje(`❌ Error: ${error.message}`);
+                    
+                    // Mostrar el error por más tiempo
+                    setTimeout(() => setMensaje(''), 10000);
                 }
             };
 
